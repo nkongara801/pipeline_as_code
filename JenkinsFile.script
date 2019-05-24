@@ -1,0 +1,33 @@
+node {
+    stage('Checkout') {
+        git 'https://github.com/nkongara801/pipeline_as_code.git'
+    }
+    stage('Say Hello') {
+        sh "./say_hello.sh"
+    }
+    stage('use passwords') {
+    withCredentials([usernamePassword(credentialsId: 'admin',
+                     usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+        echo "My  username is '${USERNAME}'"
+        echo "My  password is '${PASSWORD}'"
+    }
+  }
+  
+  try {
+      stage('echo') {
+          sh 'echo "Hello World"'
+          def obj = null 
+          sh "${obj.class}"
+      }
+  } catch (NullPointerException e) {
+      error 'broken pipeline - null pointer exception'
+      currentBuild.result = 'FAILURE' 
+      //currentBuild.result = 'UNSTABLE'
+  } finally {
+      stage('Send notification') {
+          mail to: 'nagunix@gmail.com',
+               body: "Something is wrong with ${env.BUILD_URL}",
+               subject: "Failed Pipeline: ${currentBuild.fullDisplayName}"
+      }
+  }
+}
